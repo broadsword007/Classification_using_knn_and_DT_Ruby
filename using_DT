@@ -1,0 +1,55 @@
+require 'rubygems'
+require 'decisiontree'
+require 'csv'
+
+def get_attribute_names data_table
+  attr_row=data_table[0]
+  attr_row.delete_at 0
+  attr_row
+end
+def get_table_data data_table
+  table_data= [[]]
+  for i in (1...data_table.length)
+    data_matrix_row= data_table[i]
+    data_matrix_row.delete_at 0
+    table_data.push data_matrix_row
+  end
+  table_data.delete_at 0
+  table_data
+end
+
+data_matrix= CSV.read("trainJaffe.csv",:row_sep => "\r\n")
+# Instantiate the tree, and train it based on the data (set default to '1')
+attributes=get_attribute_names data_matrix
+training_data= get_table_data data_matrix
+training_results=  CSV.read("trainJaffeLabels.csv",:row_sep => "\r\n")
+training_results_data= get_table_data training_results
+for i in 0...training_data.length
+  training_data[i].push training_results [i+1][0].to_i
+end
+
+dec_tree = DecisionTree::ID3Tree.new(attributes, training_data, 1, :continuous)
+dec_tree.train
+test_data_matrix=CSV.read("testJaffe.csv",:row_sep => "\r\n")
+test_data = get_table_data test_data_matrix
+for i in 0...test_data.length
+  test_data[i].push 1
+end
+output_labels=[]
+test_data.collect.each do |test_instance|
+  decision = dec_tree.predict(test_instance)
+  output_labels << "#{decision}"
+  i+=1
+end
+
+CSV.open("DTOutputLabels.csv", "wb") do |csv|
+  csv << ["Id","label"]
+  for i in (0...output_labels.length)
+    csv << ["#{i+1}", "#{output_labels[i]}"]
+  end
+  # ...
+end
+#changed line 88 placed to_i
+#changed line  111 placed to_i
+#changed line  171 placed to_i
+#changed line  172 placed to_i
